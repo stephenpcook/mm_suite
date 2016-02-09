@@ -1,30 +1,37 @@
-function xend=Eqd1dExact(xin,Monitor)
-% Function for a 1-d equidistributed mesh, equidistributing exactly.
-
+function xend = Eqd1dExact(xin,Monitor)
+%EQD1DEXACT Equidistribute to a monitor function structure.
+%
+% xend = Eqd1dExact(xin, Monitor)
+%
 % Function takes input of a starting mesh and a Monitor structure
 % and outputs a mesh which is equidistributed with MMPDE5, ODE15s for
 % up to t_max.
-%%%%%%%%%
-% INPUT %
-%%%%%%%%%
+%
+% %%%%%%%%%
+% % INPUT %
+% %%%%%%%%%
 %
 % xin     - starting mesh
 % Monitor - Structure. Currently accepting Monitor.type as 'points' or
 %           'function'. Points provides points and M values then splines
-%           the points. Function is defined everywhere. In both cases the 
+%           the points. Function is defined everywhere. In both cases the
 %           function is differentiated with FD at the following steps.
 %
-%%%%%%%%%%
-% OUTPUT %
-%%%%%%%%%%
+% %%%%%%%%%%
+% % OUTPUT %
+% %%%%%%%%%%
 %
-% xout - Final mesh
+% xend - Final mesh
 %
-%%%%%%%%%%%%%%
-% PARAMATERS %
-%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%
+% % PARAMATERS %
+% %%%%%%%%%%%%%%
 %
 % Stephen Cook, 15-11-2012
+%
+% See also:
+% EQD1DODE15
+
 if nargin==0
     xin=(0:21)./21;
     Monitor=@(x)exp(-10*x);
@@ -41,7 +48,7 @@ xi= h*((1:N)-1)'; % Computational grid
 x0 = xin(:);   % Initial Physical Grid
 xp0= zeros(size(x0));
 
-% MAIN FUNCTIONALITY. WHAT A MESS!
+% MAIN FUNCTIONALITY.
 if strcmp(Monitor.type,'points')
     % Should I put a check in to see that the start and end points are the
     % same for x0 and monitor.x? Probably, not now.
@@ -50,8 +57,9 @@ if strcmp(Monitor.type,'points')
     x = equidistribute(x0,x_m,Mx);
 elseif strcmp(Monitor.type,'function')
     Mx = Monitor.function(x0);
-    x=equidistribute(x0,x0,Mx);
+    x = equidistribute(x0,x0,Mx);
 end % if monitor.type==points
+
 xend = reshape(x,size(xin));
 
 function xout = equidistribute(x0,x_m,Mx)
@@ -87,7 +95,7 @@ function xout = equidistribute(x0,x_m,Mx)
     % Find the interval in which Y(ii) lies.
     while and(intU(jj) < Target, jj<N)
         jj = jj + 1;
-    end
+    end % while
     jj = jj - 1;
     
     XL = X(jj);
@@ -100,9 +108,9 @@ function xout = equidistribute(x0,x_m,Mx)
     target_local = Target - intUL;
     m = (UR-UL)/(XR-XL);
     
-    % In this interval 
+    % In this interval
     %   $$U(x) = m*(x-XL) + UL .$$
-    % We want to find Y such that 
+    % We want to find Y such that
     %   $$\int_XL^Y U(x) dx = target_local , $$
     % so we integrate to get
     %   $$ Y = XL + (-UL + sqrt(UL^2 + 2*m*target_local))/m . $$
@@ -115,7 +123,7 @@ function xout = equidistribute(x0,x_m,Mx)
     xout = Y;
 end
 
-function M=getM(Monitor)
+function M = getM(Monitor)
     if strcmp(Monitor.type,'function')
         % Monitor function given
         M = Monitor.function;
@@ -123,7 +131,7 @@ function M=getM(Monitor)
     if strcmp(Monitor.type,'points')
         % Pointwise
         % Not yet positivity preserving
-        Monitor.pp= spline(Monitor.x, Monitor.M); 
+        Monitor.pp= spline(Monitor.x, Monitor.M);
         M= @(x) ppval(Monitor.pp,x);
     end
 end % function getM
