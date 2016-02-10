@@ -1,20 +1,22 @@
 function xend=Eqd1dODE15(xin,Monitor,params)
-% Function for a 1-d moving mesh using MMPDE5 and ODE15s.
-
+%EQD1DODE15 Construct  non-uniform 1-d mesh using MMPDE5 and ODE15s.
+%
+% xend = Eqd1dODE15(xin, Monitor, params)
+%
 % Function takes input of a starting mesh and a Monitor structure
 % and outputs a mesh which is equidistributed with MMPDE5, ODE15s for
 % up to t_max.
-%%%%%%%%%
-% INPUT %
-%%%%%%%%%
+% %%%%%%%%%
+% % INPUT %
+% %%%%%%%%%
 %
 % xin     - starting mesh
 % Monitor - Structure. Currently accepting Monitor.type as 'points' or
 %           'function'. Points provides points and M values then splines
-%           the points. Function is defined everywhere. In both cases the 
+%           the points. Function is defined everywhere. In both cases the
 %           function is differentiated with FD at the following steps.
 %            .type - 'points' or 'function'
-%            .function - @(x)f(x) 
+%            .function - @(x)f(x)
 %            .x - vector
 %            .M - vector
 % params  - Structure.
@@ -22,28 +24,32 @@ function xend=Eqd1dODE15(xin,Monitor,params)
 %           .t_max
 %           .t_N
 %
-%%%%%%%%%%
-% OUTPUT %
-%%%%%%%%%%
+% %%%%%%%%%%
+% % OUTPUT %
+% %%%%%%%%%%
 %
 % xout - Final mesh
 %
-%%%%%%%%%%%%%%
-% PARAMATERS %
-%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%
+% % PARAMATERS %
+% %%%%%%%%%%%%%%
 %
 % tau   - Relaxation parameter in MMPDE5
 % t_max - What time final time to be output is
 % t_N   - The number of points to evaluate t at. (Need this?)
 %
-% Stephen Cook, 07-11-2012
+% Contains the subfunctions xt and getM
+%
+% See also:
+% EQD1DEXACT
+
 if nargin==0
     xin=(0:21)./21;
     Monitor=@(x)exp(-10*x);
 elseif nargin==2                      % Parameters
     tau= 1;
     t_max=1;
-    t_N= 200; 
+    t_N= 200;
 else
     try
         tau = params.tau;
@@ -75,7 +81,7 @@ f= @(t,x) xt(x);
 xend=xout(end,:);
 
 function xtout= xt(x)
-% Subfunction for constructing approximation to x_t
+%XT Subfunction for constructing approximation to x_t
 % x_t = 1/tau*(x_xi*M(x))_xi;
 
 % Forward/Backwards difference estimate of dx/d(xi).
@@ -103,7 +109,7 @@ function M=getM(monitor)
     if strcmp(monitor.type,'points')
         % Pointwise
         % Not yet positivity preserving
-        monitor.pp= spline(monitor.x, monitor.M); 
+        monitor.pp= spline(monitor.x, monitor.M);
         M= @(x) ppval(monitor.pp,x);
     end
 end % function getM
